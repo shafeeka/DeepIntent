@@ -14,7 +14,7 @@ import nltk
 import autocorrect
 
 from tools import save_pkl_data, load_pkl_data
-
+debug = False
 
 def pre_process(data, image_min_size, image_wh_ratio, text_min_support,
                 target_permission_groups, vocab2id, label2id):
@@ -128,7 +128,8 @@ def pre_process(data, image_min_size, image_wh_ratio, text_min_support,
     if label2id is None:
         label2id = pre_process_get_perm_dict(target_permission_groups.keys())
     data_indexed = pre_process_indexing(data_new, vocab2id, label2id)
-
+    if debug == True:
+        print (data_indexed)
     return data_indexed, vocab2id, label2id
 
 
@@ -201,7 +202,7 @@ def pre_process_refine_embedded_texts(texts, speller, is_print=False):
 
 
 def pre_process_statistics(data, removed_data):
-    print('example:', [data[0][0][:2]] + data[0][1:])  # image meta + other info
+    #print('example:', [data[0][0][:2]] + data[0][1:])  # image meta + other info -> [('LA', (92, 122)), [[], ['4'], ['b41']], {'android.permission.VIBRATE', 'android.permission.WAKE_LOCK'}]
     for removed_name, removed_list in removed_data.items():
         print(removed_name + ':', len(removed_list))
     token_counter = Counter()
@@ -235,7 +236,7 @@ def pre_process_indexing(data, vocab2id, label2id):
     token_unk_index = vocab2id['UNK']
     for img_data, tokens, permissions in data:
         tokens_indexed = [vocab2id.get(t, token_unk_index) for t in tokens]
-        perms_indexed = [label2id[p] for p in permissions]
+        perms_indexed = [label2id[p] for p in permissions if p in label2id]
         data_indexed.append([img_data, tokens_indexed, perms_indexed])
 
     return data_indexed
@@ -283,6 +284,12 @@ def stem_tokens(tokens):
 
 
 def pre_process_save_results(path_out, data, v2id, l2id):
+    if debug == True:
+        print("v2id")
+        print(v2id)
+        print("l2id")
+        print(l2id)
+        print(len(data),len(v2id),len(l2id))
     save_pkl_data(path_out, [(v2id, l2id), data])
 
 
@@ -307,6 +314,10 @@ def execute_with_conf(conf, vocab2id=None, label2id=None):
     """
     # load data
     data = load_pkl_data(conf.path_data_in)
+    if debug == True:
+        print("length of loaded data" + str(len(data)))
+        #print(data[0])
+    
     # pre-process
     result = pre_process(
         data, conf.image_min_size, conf.image_wh_ratio, conf.text_min_support,
@@ -314,8 +325,10 @@ def execute_with_conf(conf, vocab2id=None, label2id=None):
     )
     # save results
     pre_process_save_results(conf.path_data_out, *result)
-
+    if debug == True:
+        print(result)
     return result
+
 
 
 def total_example():
@@ -326,8 +339,8 @@ def total_example():
 
     conf_benign = PreProcessConf(
         # path
-        path_data_in=os.path.join(path_data, 'example', 'raw_data.benign.pkl'),
-        path_data_out=os.path.join(path_data, 'example', 'data.benign.pkl'),
+        path_data_in=os.path.join(path_data, 'example', 'raw_benign_debug.pkl'),
+        path_data_out=os.path.join(path_data, 'example', 'processed_benign_debug.pkl'),
         # image
         image_min_size=5,
         image_wh_ratio=10,
@@ -336,7 +349,7 @@ def total_example():
         # permissions
         target_groups=target_groups,
     )
-
+    '''
     conf_mal = PreProcessConf(
         # path
         path_data_in=os.path.join(path_data, 'example', 'raw_data.mal.pkl'),
@@ -349,15 +362,42 @@ def total_example():
         # permissions
         target_groups=target_groups,
     )
-
+    '''
     print('benign')
     _, v2id, l2id = execute_with_conf(conf_benign)
+    '''
     print('malicious')
     execute_with_conf(conf_mal, v2id, l2id)
+    '''
+def new_apk():
+    from conf import PreProcessConf, target_groups
+
+    path_current = os.path.dirname(os.path.abspath(__file__))
+    path_data = os.path.join(path_current, '..', 'data')
+
+    conf_apk = PreProcessConf(
+        # path
+        path_data_in=os.path.join(path_data, 'new_apk', 'raw_extraction_data.pkl'),
+        path_data_out=os.path.join(path_data, 'new_apk', 'processed_extraction_data.pkl'),
+        # image
+        image_min_size=5,
+        image_wh_ratio=10,
+        # text
+        text_min_support=5,
+        # permissions
+        target_groups=target_groups,
+    )
+    print('new apk')
+    execute_with_conf(conf_apk)
 
 
 def main():
-    total_example()
+    import sys
+    args = sys.argv[1:]
+    if '--outlier_detection' in args:
+        new_apk()
+    else:
+        total_example()
 
 
 if __name__ == '__main__':

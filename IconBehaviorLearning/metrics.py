@@ -49,7 +49,10 @@ def metrics_ex(y_true, y_predict):
 
     precision = precision_ex(y_true, y_predict)
     recall = recall_ex(y_true, y_predict)
-    f1 = 2 * precision * recall / (precision + recall)
+    if (precision + recall) == 0.0:
+        f1 = 0
+    else:
+        f1 = 2 * precision * recall / (precision + recall)
     acc = accuracy_score(np.array(y_true), np.array(y_predict))
 
     return precision, recall, f1, acc
