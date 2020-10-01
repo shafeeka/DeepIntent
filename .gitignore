@@ -6,3 +6,10 @@ __pycache__
 
 # misc
 .DS_Store
+
+# ignore all apk files
+*.apk
+
+
+#ignore all data
+/data/
