@@ -112,7 +112,7 @@ def decodeAPK(apkPath, decodeLocation, output = None):
     GLOBAL_DECODE_LOCK.acquire()
     callList = ['java',\
                 '-jar',\
-                "apktool.jar",\
+                "/mnt/c/intern/deepintent/IconWidgetAnalysis/Static_Analysis/gator-IconIntent/apktool.jar",\
                 'd', apkPath,\
                 '-o', decodeLocation, \
                 '-f']

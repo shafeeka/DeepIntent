@@ -40,6 +40,7 @@ import soot.util.queue.QueueReader;
 import javax.sound.sampled.Line;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 
+
 public class APKCallGraph {
 
 
@@ -75,7 +76,7 @@ public class APKCallGraph {
 	static ArrayList<String> handlers = new ArrayList<>();
 	static HashMap<String, ArrayList<Stmt>> methodToStmts = new HashMap<>();
 
-	static String androidPlatformPath = "/Users/shaoyang/Library/Android/sdk/platforms/android-18/android.jar";
+	static String androidPlatformPath = "/mnt/c/Users/ASUS/AppData/Local/Android/Sdk/platforms/android-18/android.jar";
 
 
 
@@ -210,18 +211,22 @@ public class APKCallGraph {
 		 * Scan every input widget-handler mapping, skip when no mapping is found.
 		 * If mapping is found, build extended static call graph of the app, extract subgraph(s), check API(s) and permission.
 		 */
-		String apk = "com.Abby_Alex";
-		//String apk = args[0].substring(args[0].lastIndexOf("/"), args[0].indexOf(".apk"));
-		//String appPath = args[1];
-		String appPath = "/Users/shaoyang/Desktop/";
-		//String inputCSVPath = args[2];
-		String inputCSVPath = "/Users/shaoyang/Desktop/";
-		//String permissionOutput = args[3];
-		String permissionOutput = "/Users/shaoyang/Desktop/";
+		//String apk = "com.Abby_Alex";
+		String apk = args[0].substring(args[0].lastIndexOf("/"), args[0].indexOf(".apk"));
+		String appPath = args[1];
+		//String appPath = "/mnt/c/intern/deepintent/data/example/benign/"; // "/Users/shaoyang/Desktop/";
+		String inputCSVPath = args[2];
+		//String inputCSVPath = "/mnt/c/intern/deepintent/IconWidgetAnalysis/Static_Analysis/";//"/Users/shaoyang/Desktop/";
+		String permissionOutput = args[3];
+		//String permissionOutput = "/mnt/c/intern/deepintent/IconWidgetAnalysis/Static_Analysis/permission_output/";//"/Users/shaoyang/Desktop/";
 		//String apk = "nextcloud";
-		//String ic3 = args[4];
-		String ic3 = "/Users/shaoyang/Desktop/ic3output/";
-
+		String ic3 = args[4];
+		//String ic3 = "/mnt/c/intern/deepintent/IconWidgetAnalysis/Static_Analysis/ic3output/";//"/Users/shaoyang/Desktop/ic3output/";
+		androidPlatformPath = args[5];
+		String sourcesAndSinksPath = args[6];
+		String androidCallBackPath = args[7];
+		String dotOutputPath = args[8];
+		String databaseUrl = args[9];
 		System.out.println("Start analyze apk: " + apk + ".apk");
 
 		String apkPath = appPath + apk + ".apk";
@@ -250,8 +255,8 @@ public class APKCallGraph {
 		}else if (numberOfLines > 1 && hasHandler != true) {
 			System.out.println("No handler found.");
 		}else {
-			generateCallGraph(apk, apkPath, ic3);
-			getHandlers(apk,inputCSVPath + inputCSV);
+			generateCallGraph(apk, apkPath, ic3, sourcesAndSinksPath, androidCallBackPath, dotOutputPath);
+			getHandlers(apk,inputCSVPath + inputCSV, dotOutputPath, databaseUrl);
 
 			if (permMethods.size() > 0){
 				writeInfoToFile(permissionOutput, apk);
@@ -259,7 +264,7 @@ public class APKCallGraph {
 		}
 	}
 
-	public static void generateCallGraph(String apk, String apkPath, String ic3) throws IOException, XmlPullParserException {
+	public static void generateCallGraph(String apk, String apkPath, String ic3, String sourcesAndSinksPath, String androidCallBackPath, String dotOutputPath) throws IOException, XmlPullParserException {
 		/*
 		 * Soot configs
 		 * Running BFS to build call graph
@@ -267,7 +272,7 @@ public class APKCallGraph {
 		 */
 		SetupApplication app = new SetupApplication(androidPlatformPath, apkPath);
 		Options.v().set_android_api_version(18);
-		app.calculateSourcesSinksEntrypoints("/Users/shaoyang/Work/APKCallGraph/SourcesAndSinks.txt");
+		app.calculateSourcesSinksEntrypoints(sourcesAndSinksPath);
 		soot.G.reset();
 		Options.v().set_keep_line_number(true);
 		Options.v().set_src_prec(Options.src_prec_apk);
@@ -282,7 +287,7 @@ public class APKCallGraph {
 		Options.v().set_allow_phantom_refs(true);
 		Options.v().set_keep_line_number(true);
 		Options.v().set_output_format(Options.output_format_jimple);
-		app.setCallbackFile("/Users/shaoyang/Work/APKCallGraph/AndroidCallbacks.txt");
+		app.setCallbackFile(androidCallBackPath);
 
 		Scene.v().loadNecessaryClasses();
 
@@ -498,9 +503,9 @@ public class APKCallGraph {
 
 		DOTExporter<MethodNode, CallEdge> exporter = new DOTExporter<MethodNode, CallEdge>(
 				apkg.new MethodnodeIdProvider(), apkg.new MethodNodeNameProvider(), null);
-		File file = new File("/Users/shaoyang/Downloads/Static_Analysis/dot_output/" + apk + "/");
+		File file = new File(dotOutputPath + apk + "/");//"/Users/shaoyang/Downloads/Static_Analysis/dot_output/" + apk + "/");
 		file.mkdir();
-		exporter.exportGraph(jg, new FileWriter("/Users/shaoyang/Downloads/Static_Analysis/dot_output/" + apk + "/" + apk + ".dot"));
+		exporter.exportGraph(jg, new FileWriter(dotOutputPath + apk + "/" + apk + ".dot"));
 	}
 
 
@@ -580,7 +585,7 @@ public class APKCallGraph {
 		}
 	 }
 
-	 public static void generateSubGraphOfMethod(String apk, String method) throws IOException, SQLException {
+	 public static void generateSubGraphOfMethod(String apk, String method, String dotOutputPath, String databaseUrl) throws IOException, SQLException {
 		/*
 		 * This function is used to generate subgraph of an event handler.
 		 * Each node in the subgraph will be checked if it is related to certain permissions.
@@ -629,7 +634,7 @@ public class APKCallGraph {
 
 			DOTExporter<MethodNode, CallEdge> exporter = new DOTExporter<MethodNode, CallEdge>(
 					apkg.new MethodnodeIdProvider(), apkg.new MethodNodeNameProvider(), null);
-			exporter.exportGraph(subGraph, new FileWriter("/Users/shaoyang/Downloads/Static_Analysis/dot_output/" + apk + "/" + method + ".dot"));
+			exporter.exportGraph(subGraph, new FileWriter(dotOutputPath + apk + "/" + method + ".dot"));
 
 			isGenerated = true;
 
@@ -639,7 +644,7 @@ public class APKCallGraph {
 		for (String m: subgraph){
 			System.out.println("Checking permissions");
 			System.out.println("Method----------------" + m);
-			String permission = getPermission(m.replace("\'", ""));
+			String permission = getPermission(m.replace("\'", ""), databaseUrl);
 			if (permission == null){
 				continue;
 			}
@@ -661,7 +666,7 @@ public class APKCallGraph {
 		}
 	 }
 
-	public static String getPermission(String method) throws SQLException{
+	public static String getPermission(String method, String databaseUrl) throws SQLException{
 		/*
 		 * Connect mysql PScout mapping database.
 		 * Run sql given certain APIs, and return corresponding permissions.
@@ -672,7 +677,7 @@ public class APKCallGraph {
 		String methodClass = method.substring(1, method.indexOf(":"));
 		String sql = "select Permission from outputmapping where Method = '" + method + "'";
 		String driver = "com.mysql.cj.jdbc.Driver";
-		String url = "jdbc:mysql://localhost:3306/APKCalls?user=root&password=jiaozhuys05311&serverTimezone=GMT";
+		String url = databaseUrl;
 		try {
 			Class.forName(driver);
 			connection = DriverManager.getConnection(url);
@@ -689,7 +694,7 @@ public class APKCallGraph {
 	}
 
 
-	public static void getHandlers(String apk, String fileName) throws IOException, SQLException {
+	public static void getHandlers(String apk, String fileName, String dotOutputPath, String databaseUrl) throws IOException, SQLException {
 		/*
 		 * Using regex to match event handlers.
 		 * If handler is found, it is used to generate subgraph.
@@ -723,10 +728,10 @@ public class APKCallGraph {
 						ArrayList<String> temp = new ArrayList<>();
 						temp.add("<" + matcher.group(1) + ">");
 						lineVSHdl.put(tempLine, temp);
-						generateSubGraphOfMethod( apk, "<" + matcher.group(1) + ">");
+						generateSubGraphOfMethod( apk, "<" + matcher.group(1) + ">", dotOutputPath, databaseUrl);
 					}else {
 						lineVSHdl.get(tempLine).add("<" + matcher.group(1) + ">");
-						generateSubGraphOfMethod( apk, "<" + matcher.group(1) + ">");
+						generateSubGraphOfMethod( apk, "<" + matcher.group(1) + ">", dotOutputPath, databaseUrl);
 					}
 				}
 			}

@@ -1,9 +1,10 @@
 import os
 import csv
+import sys
 
-inputf = "/Users/shaoyang/Desktop/permissions.csv"
-inputf2 = "/Users/shaoyang/Desktop/1tomore.txt"
-outputf = "/Users/shaoyang/Desktop/outputP.csv"
+inputf = sys.argv[1]
+inputf2 = sys.argv[2]
+outputf = sys.argv[3]
 methods = dict()
 count = 0
 

@@ -9,10 +9,12 @@ def loadFile():
 			getNames(str(dirPath), str(files[i]))
 
 def getNames(inputDir, fileName):
+	txtPath = sys.argv[2]
 	index = fileName.rindex(".apk.json")
 	fileName = fileName[0:index]
 	print(fileName)
-	f = open("selectedAPK.txt", "a")
+	#f = open("/mnt/c/intern/deepintent/IconWidgetAnalysis/Static_Analysis/selectedAPK.txt", "a")
+	f = open(txtPath, "a")
 	f.write(fileName + "\n")
 
 def main():

@@ -9,7 +9,7 @@ from handle_layout_text import handle_layout_text
 from handle_embedded_text import extract_drawable_image, load_east_model, extract_embedded_text
 from handle_resource_text import handle_resource_text
 
-
+debug = False
 def extract_contextual_texts(data, drawable_images, path_app, path_east,
                              search_range='parent',
                              ocr_size=(320, 320), ocr_padding=0.1, enable_ocr_cache=True,
@@ -145,10 +145,11 @@ def execute_with_conf(conf):
     # load program analysis results, format: app, image, layout, permissions
     print('loading program analysis results')
     data_pa = load_data(conf.path_pa)
-
+    if debug==True:
+        print(data_pa[0:2])
     # extract drawable images
     print('extracting drawable images')
-    log_level = check_conf(conf.log_level, {0, 1, 2}, 0)
+    log_level = check_conf(conf.log_level, {0, 1, 2}, 0) #log_level = 2
     drawable_images = extract_drawable_images(data_pa, conf.path_app, conf.log_level)
 
     # extract texts, format: layout_texts, embedded_texts, resource_texts
@@ -168,7 +169,10 @@ def execute_with_conf(conf):
     assert len(data_pa) == len(drawable_images) == len(texts)
     # format: [(compressed_img), [[layout_texts], [embedded_texts], [res_texts]], {permissions}]
     data = [[drawable_images[i]] + [texts[i]] + [data_pa[i][-1]] for i in range(len(data_pa))]
+    if debug==True:
+        print([[drawable_images[1]] + [texts[1]] + [data_pa[1]][-1]])
     save_pkl_data(conf.path_save, data)
+
 
 
 def example():
@@ -193,22 +197,20 @@ def example():
         enable_translate=True,
         enable_translate_cache=True
     )
+    print(example_conf)
     execute_with_conf(example_conf)
 
-
-def total_example():
-    # path
+def new_apk():
     path_current = os.path.dirname(os.path.abspath(__file__))
     path_data = os.path.join(path_current, '..', '..', 'data')
-    # conf
-    benign_conf = ExtractionConf(
+    apk_conf = ExtractionConf(
         # path
-        path_pa=os.path.join(path_data, 'example', 'benign_pa.zip'),
-        path_app=os.path.join(path_data, 'example', 'benign_decoded'),
+        path_pa=os.path.join(path_data, 'new_apk', 'new_apk_output', 'outputP.csv'),
+        path_app=os.path.join(path_data, 'new_apk', 'new_apk_decoded'),
         path_east=os.path.join(path_data, 'frozen_east_text_detection.pb'),
-        path_save=os.path.join(path_data, 'example', 'raw_data.benign.pkl'),
+        path_save=os.path.join(path_data, 'new_apk', 'raw_extraction_data.pkl'),
         # log
-        log_level=1,
+        log_level=2,
         # layout text extraction
         layout_text_range='parent',
         # embedded text extraction
@@ -220,7 +222,36 @@ def total_example():
         enable_translate=True,
         enable_translate_cache=True
     )
+    print("extracting from new apk")
+    execute_with_conf(apk_conf)
 
+def total_example():
+    if debug==True:
+        print("testing pass")
+    # path
+    path_current = os.path.dirname(os.path.abspath(__file__))
+    path_data = os.path.join(path_current, '..', '..', 'data')
+    # conf
+    benign_conf = ExtractionConf(
+        # path
+        path_pa=os.path.join(path_data, 'example', 'outputP.csv'),
+        path_app=os.path.join(path_data, 'example', 'benign_decoded'),
+        path_east=os.path.join(path_data, 'frozen_east_text_detection.pb'),
+        path_save=os.path.join(path_data, 'example', 'raw_benign_debug.pkl'),
+        # log
+        log_level=2,
+        # layout text extraction
+        layout_text_range='parent',
+        # embedded text extraction
+        ocr_width=320,
+        ocr_height=320,
+        ocr_padding=0.05,
+        enable_ocr_cache=True,
+        # translation
+        enable_translate=True,
+        enable_translate_cache=True
+    )
+    '''
     malicious_conf = ExtractionConf(
         # path
         path_pa=os.path.join(path_data, 'example', 'malicious_pa.zip'),
@@ -240,11 +271,13 @@ def total_example():
         enable_translate=True,
         enable_translate_cache=True
     )
-
+    '''
     print('benign')
     execute_with_conf(benign_conf)
+    '''
     print('malicious')
     execute_with_conf(malicious_conf)
+    '''
 
 
 def main():
@@ -269,19 +302,31 @@ def main():
     please see the README.md file.
     """
     import sys
+    #from pycallgraph import PyCallGraph
+    #from pycallgraph.output import GraphvizOutput
+    #graphviz = GraphvizOutput()
+    #graphviz.output_file = 'basic.png'
     args = sys.argv[1:]
+    # ./extract.py --ex fafdsa   --example <real file>  --total_example  -datafile <datafile> 
+    # ./extract.py <datafile> --example --total_example
+    if '--outlier_detection' in args:
+        #for i in range(len(args)):
+        #    if '-datafile' ==  args[i] and (i+1 < len(args)):
+        #        datafile = args[i+1] 
+        #with PyCallGraph(output=graphviz):
+        new_apk()
 
     # example or total example
-    if '--example' in args:
-        example()
+    # elif '--example' in args:
+    #     example()
     elif '--total_example' in args:
         total_example()
-    else:
-        # extraction texts based on arguments
-        from conf import ExtractionConfArgumentParser
-        parser = ExtractionConfArgumentParser()
-        args_conf = parser.parse(args)
-        execute_with_conf(args_conf)
+    # else:
+    #     # extraction texts based on arguments
+    #     from conf import ExtractionConfArgumentParser
+    #     parser = ExtractionConfArgumentParser()
+    #     args_conf = parser.parse(args)
+    #     execute_with_conf(args_conf)
 
 
 if __name__ == '__main__':

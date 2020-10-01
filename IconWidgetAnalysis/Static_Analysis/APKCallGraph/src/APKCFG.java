@@ -40,7 +40,7 @@ public class APKCFG {
     public void generateCFG(String appPath) throws Exception {
 //        String androidPlatformPath = "D:/Android/sdk/platforms/android-23/android.jar";
 //        String androidPlatformPath = "/Users/majunqi0102/Library/Android/sdk/platforms/android-23/android.jar";
-    	String androidPlatformPath = "/Users/shaoyang/Library/Android/sdk/platforms/android-18/android.jar";
+    	String androidPlatformPath = "/mnt/c/Users/ASUS/AppData/Local/Android/Sdk/platforms/android-18/android.jar";
         SetupApplication app = new SetupApplication(androidPlatformPath, appPath);
         // app.
         Options.v().set_android_api_version(22);

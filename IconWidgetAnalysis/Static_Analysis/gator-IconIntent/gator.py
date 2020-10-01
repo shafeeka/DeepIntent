@@ -13,12 +13,13 @@ g_gator_root = sys.argv[3]
 g_process_size = 6
 g_timeout = 3600
 g_start_index = 0
-g_stop_index = 28
+g_stop_index = 300 
 
 g_lock = None
 g_skip_handled = True
 g_redo_failed = False
-g_fp_result = "result.txt"  # file path
+g_fp_result = sys.argv[4]  # file path
+curpath = os.path.dirname(os.path.realpath(__file__))
 
 
 class GlobalConfigs:
@@ -66,10 +67,10 @@ def extract_jar_libs(path_base):
 
 
 def decode_apk(apk_path, decode_path, frame_path, output=None):
-    cmd = ["java", "-jar", "apktool.jar", "d", apk_path,
+    cmd = ["java", "-jar", os.path.join(curpath, "apktool.jar"), "d", apk_path,
            "--frame-path", frame_path,
            "-o", decode_path, "-f"]
-
+    #print(" ".join(cmd))
     return subprocess.run(cmd, stdout=output, stderr=None)
 
 
@@ -120,7 +121,7 @@ def invoke_gator_on_apk(
            "-listenerSpecFile", soot_android_path + "/listeners.xml",
            "-wtgSpecFile", soot_android_path + '/wtg.xml']
     cmd.extend(options)
-    # print(" ".join(cmd))
+    #print(" ".join(cmd))
 
     if timeout == 0:
         return subprocess.run(cmd, stdout=output, stderr=output)
@@ -222,8 +223,8 @@ def main():
     os.environ["GatorRoot"] = g_gator_root
 
     # create output dir
-    log_dir = "log_output"
-    output_dirs = ["output", "dot_output", log_dir]
+    log_dir = os.path.join(curpath, "log_output")
+    output_dirs = [os.path.join(curpath, "output"), os.path.join(curpath, "dot_output"), log_dir]
     for output_dir in output_dirs:
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
@@ -252,7 +253,7 @@ def main():
 
     # init state
     start_index = g_start_index
-    stop_index = g_stop_index if g_stop_index > g_start_index else len(apps)
+    stop_index = g_stop_index if g_stop_index > g_start_index and g_stop_index < len(apps) else len(apps)
     for i in range(start_index, stop_index):
         app = apps[i]
         if not app.endswith(".apk"):
@@ -262,7 +263,7 @@ def main():
             continue
 
         app_path = os.path.join(g_app_dir, app)
-        configs = parse_gator_params([app_path, "-client", "WTGDemoClient"])
+        configs = parse_gator_params([app_path, "-client", "WTGDemoClient", "--keep-decoded-apk-dir"])
         fp_output = os.path.join(log_dir, app.replace(".apk", ".log"))
         msg = "{}/{}".format(i, len(apps))
 

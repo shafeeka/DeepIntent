@@ -1,6 +1,8 @@
 import os
 
-path = "/Users/shaoyang/Downloads/test/output/img2widgets/"
+#path = "/Users/shaoyang/Downloads/test/output/img2widgets/"
+#path = "/mnt/c/intern/deepintent/IconWidgetAnalysis/Static_Analysis/img2widgets/"
+path="/home/shafeeka/deepintent/IconWidgetAnalysis/Static_Analysis/img2widgets/"
 files = os.listdir(path)
 count = 0
 
