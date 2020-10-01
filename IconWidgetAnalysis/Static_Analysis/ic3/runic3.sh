@@ -1,26 +1,27 @@
-#! /bin/sh
-
+#!/bin/sh
+#ubuntu
+IC3PATH=/home/shafeeka/deepintent/IconWidgetAnalysis/Static_Analysis/ic3
+cd $IC3PATH
 appDir=$1
-forceAndroidJar=/Users/shaoyang/Library/Android/sdk/platforms/android-18/android.jar
-
+forceAndroidJar=/home/shafeeka/Android/Sdk/platforms/android-18/android.jar
 rm -rf testspace
 mkdir testspace
-rm -rf output
-mkdir output
-var=1
-for appPath in `ls $appDir/*.apk`
-do
-appName=`basename $appPath .apk`
-retargetedPath=testspace/$appName.apk
+rm -rf ic3output
+mkdir ic3output
+var=0
+for appPath in `ls $appDir/*.apk`; do
+    appName=`basename $appPath .apk`
+    retargetedPath=$IC3PATH/testspace/$appName.apk
 
-mysql -uroot -pjiaozhuys05311 -e 'drop database if exists cc; create database cc'
-mysql -uroot -pjiaozhuys05311 cc < schema
+    #mysql -ushafeeka -pjiaozhuys05311 -e 'drop database if exists cc; create database cc'
+    #mysql -ushafeeka -pjiaozhuys05311 cc < $IC3PATH/schema
 
-rm -rf output/$appName
-mkdir output/$appName
+    rm -rf $IC3PATH/ic3output/$appName
+    mkdir $IC3PATH/ic3output/$appName
 
-gtimeout 1800 java -Xmx24000m -jar RetargetedApp.jar $forceAndroidJar $appPath $retargetedPath
-gtimeout 1800 java -Xmx24000m -jar ic3-0.2.0-full.jar -apkormanifest $appPath -input $retargetedPath -cp $forceAndroidJar -db cc.properties -dbname cc1 -protobuf output/$appName
-var=$((var+1))
+    timeout 1800 java -Xmx24000m -jar $IC3PATH/RetargetedApp.jar $forceAndroidJar $appPath $retargetedPath
+    timeout 1800 java -Xmx24000m -jar $IC3PATH/ic3-0.2.0-full.jar -apkormanifest $appPath -input $retargetedPath -cp $forceAndroidJar -db cc.properties -dbname cc -protobuf $IC3PATH/ic3output/$appName
+    var=$((var+1))
 done
 echo "finished $var apk files."
+
