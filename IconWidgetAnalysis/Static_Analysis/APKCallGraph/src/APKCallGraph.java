@@ -212,7 +212,7 @@ public class APKCallGraph {
 		 * If mapping is found, build extended static call graph of the app, extract subgraph(s), check API(s) and permission.
 		 */
 		//String apk = "com.Abby_Alex";
-		String apk = args[0].substring(args[0].lastIndexOf("/"), args[0].indexOf(".apk"));
+		String apk = args[0].substring(args[0].lastIndexOf("/"), args[0].lastIndexOf(".apk"));
 		String appPath = args[1];
 		//String appPath = "/mnt/c/intern/deepintent/data/example/benign/"; // "/Users/shaoyang/Desktop/";
 		String inputCSVPath = args[2];
