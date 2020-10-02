@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import os
-
+import sys
 from conf import check_conf, ExtractionConf
 from tools import save_pkl_data, ProcessPrinter
 from load_data import load_data
@@ -10,6 +10,7 @@ from handle_embedded_text import extract_drawable_image, load_east_model, extrac
 from handle_resource_text import handle_resource_text
 
 debug = False
+
 def extract_contextual_texts(data, drawable_images, path_app, path_east,
                              search_range='parent',
                              ocr_size=(320, 320), ocr_padding=0.1, enable_ocr_cache=True,
@@ -200,15 +201,15 @@ def example():
     print(example_conf)
     execute_with_conf(example_conf)
 
-def new_apk():
+def new_apk(newApkOutputPath, newApkDecodedPath):
     path_current = os.path.dirname(os.path.abspath(__file__))
     path_data = os.path.join(path_current, '..', '..', 'data')
     apk_conf = ExtractionConf(
         # path
-        path_pa=os.path.join(path_data, 'new_apk', 'new_apk_output', 'outputP.csv'),
-        path_app=os.path.join(path_data, 'new_apk', 'new_apk_decoded'),
+        path_pa=os.path.join(path_data, newApkOutputPath, 'outputP.csv'),
+        path_app=os.path.join(path_data, newApkDecodedPath),
         path_east=os.path.join(path_data, 'frozen_east_text_detection.pb'),
-        path_save=os.path.join(path_data, 'new_apk', 'raw_extraction_data.pkl'),
+        path_save=os.path.join(path_data, newApkOutputPath, 'raw_extraction_data.pkl'),
         # log
         log_level=2,
         # layout text extraction
@@ -307,14 +308,13 @@ def main():
     #graphviz = GraphvizOutput()
     #graphviz.output_file = 'basic.png'
     args = sys.argv[1:]
-    # ./extract.py --ex fafdsa   --example <real file>  --total_example  -datafile <datafile> 
-    # ./extract.py <datafile> --example --total_example
+
     if '--outlier_detection' in args:
-        #for i in range(len(args)):
-        #    if '-datafile' ==  args[i] and (i+1 < len(args)):
-        #        datafile = args[i+1] 
+        newApkOutputPath = sys.argv[1]
+        newApkDecodedPath = sys.argv[2]
+         
         #with PyCallGraph(output=graphviz):
-        new_apk()
+        new_apk(newApkOutputPath,newApkDecodedPath)
 
     # example or total example
     # elif '--example' in args:

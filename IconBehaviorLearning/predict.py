@@ -11,6 +11,7 @@ from layers import CoAttentionParallel
 from prepare import prepare_data
 from metrics import evaluate, display_scores
 
+debug = False
 
 def predict(predict_conf):
     # load data
@@ -34,42 +35,48 @@ def predict(predict_conf):
                                    meta_text_len, meta_label_num, 0, 0)
 
     # predict with trained model
-    print(data_test)
     x_test, y_test = data_test
     y_predict = model.predict(x_test)
-
     y_true = y_test.tolist()
-    txtPath = sys.argv[1]
-    print(len(x_test))
-    print(len(y_true))
-    print(len(y_test))
-    f = open(txtPath, "a")
-    for i in range(len(y_true)):
-        f.write(str(y_true[i]) + "\t" + str(y_predict[i]) + "\n")
-        #f.write(str(x_test) + "\t" + str(y_true[i]) + "\t" + str(y_predict[i]) + "\n")
-    f.close()
-    #save to txt file
-
-
-    '''
-    # save predictions
-    save_pkl_data(predict_conf.path_predictions, [y_predict, y_test])
-    '''
-    # print metric results
     scores = evaluate(y_true, y_predict, predict_conf.threshold)
     label_names = [meta_id2label[i] for i in range(len(meta_id2label))]
-    #display_scores(scores, label_names)
-    txtPath2 = sys.argv[2]
-    f2 = open(txtPath2, "a")
-    f2.write("PERMISSION LABELS:")
-    scoreType = ["precision", "recall", "f1", "acc"]
-    for j in range(len(label_names)):
-        f2.write(str(label_names[j]) + "\t")
-    for k in range(len(scores)):
-        for s in range(len(scoreType)):
-            f2.write(scoreType[s] + "=" + str(scores[k][s]) + "\t")
-        f2.write("\n")
-    f2.close()
+    if debug:
+        print(len(x_test))
+        print(len(y_true))
+        print(len(y_test))
+    
+
+
+    if '--outlier_detection' in sys.argv[1:]:
+        #print prediction results
+        predictionPath = sys.argv[1] 
+        f = open(predictionPath, "a")
+        f.write(sys.argv[4] + "\n") #apppend app name first
+
+        for i in range(len(y_true)):
+            f.write("y_true is: " + "\n" + str(y_true[i]) + "\n" + "y_predict is: " + "\n" + str(y_predict[i]) + "\n")
+        
+        f.close()
+
+        # print metric results
+        metricsPath = sys.argv[2]
+        f2 = open(metricsPath, "a")
+        f2.write(sys.argv[4] + "\n") #apppend app name first
+        
+        scoreType = ["precision", "recall", "f1", "acc","support"]
+        thresholdScores = scores[1]
+
+        for k in range(len(meta_id2label)): #8 - print permission group
+            f2.write(meta_id2label[k] + "\n")
+            for s in range(len(thresholdScores)): #5 - print the 5 scores for the permission group
+                f2.write(scoreType[s] + " = " + str(thresholdScores[s][k]) + "\t")
+            f2.write("\n")
+        f2.close()
+
+    else:
+        # save predictions
+        save_pkl_data(predict_conf.path_predictions, [y_predict, y_test])
+        display_scores(scores, label_names)
 
 def total_example():
     import os
@@ -88,17 +95,17 @@ def total_example():
 
     predict(predict_conf)
 
-def new_apk():
+def new_apk(newApkInputPath):
     import os
 
     path_current = os.path.dirname(os.path.abspath(__file__))
     path_data = os.path.join(path_current, '..', 'data')
     predict_conf = PredictConf(
         # path
-        path_data=os.path.join(path_data, 'new_apk', 'processed_extraction_data.pkl'),
+        path_data=os.path.join(path_data, newApkInputPath, 'processed_extraction_data.pkl'),
         path_meta=os.path.join(path_data, 'total', 'deepintent.meta'),
         path_model=os.path.join(path_data, 'total', 'deepintent.model'),
-        path_predictions=os.path.join(path_data, 'new_apk', 'new.apk.predictions'),
+        path_predictions=os.path.join(path_data, newApkInputPath, 'new.apk.predictions'),
         # prediction
         threshold=0.5
     )
@@ -109,7 +116,9 @@ def new_apk():
 def main():
     args = sys.argv[1:]
     if '--outlier_detection' in args:
-        new_apk()
+        single_apk = True
+        newApkInputPath = sys.argv[3]
+        new_apk(newApkInputPath)
     else:
         total_example()
 

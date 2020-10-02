@@ -369,7 +369,7 @@ def total_example():
     print('malicious')
     execute_with_conf(conf_mal, v2id, l2id)
     '''
-def new_apk():
+def new_apk(newApkOutputPath):
     from conf import PreProcessConf, target_groups
 
     path_current = os.path.dirname(os.path.abspath(__file__))
@@ -377,8 +377,8 @@ def new_apk():
 
     conf_apk = PreProcessConf(
         # path
-        path_data_in=os.path.join(path_data, 'new_apk', 'raw_extraction_data.pkl'),
-        path_data_out=os.path.join(path_data, 'new_apk', 'processed_extraction_data.pkl'),
+        path_data_in=os.path.join(path_data, newApkOutputPath, 'raw_extraction_data.pkl'),
+        path_data_out=os.path.join(path_data, newApkOutputPath, 'processed_extraction_data.pkl'),
         # image
         image_min_size=5,
         image_wh_ratio=10,
@@ -395,7 +395,8 @@ def main():
     import sys
     args = sys.argv[1:]
     if '--outlier_detection' in args:
-        new_apk()
+        newApkOutputPath = sys.argv[1]
+        new_apk(newApkOutputPath)
     else:
         total_example()
 
