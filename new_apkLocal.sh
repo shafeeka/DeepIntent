@@ -19,16 +19,26 @@ fi
 #run static analysis : edit the path variables script prior
 cd $DI/IconWidgetAnalysis/Static_Analysis/
 bash clearAll.sh
-bash runImg2widgetsLocal.sh $APK/apk
+bash runImg2widgetsLocal.sh $APK/apk &>> $APK/log.txt
 cp -r outputP.csv $APK
+#check if outputP.csv us empty
+if [ "$(wc -l <$APK/outputP.csv)" -eq 1 ]
+then
+    echo "outputP.csv of $APPNAME is empty. Exiting..."
+    exit
+fi
 #run decode.py
 cd $DI/data/text_example/total/
-python3 decode.py $APK/apk $DECODED $GATORAPKTOOL
+python3 decode.py $APK/apk $DECODED $GATORAPKTOOL &>> $APK/log.txt
 #run contextual text extraction
 cd $DI/IconWidgetAnalysis/ContextualTextExtraction
-python3 extract_text.py $APK $DECODED '--outlier_detection'
+python3 extract_text.py $APK $DECODED '--outlier_detection' &>> $APK/log.txt
 #run pre_process.py
 cd $DI/IconBehaviorLearning
-python3 pre_process.py $APK '--outlier_detection'
+python3 pre_process.py $APK '--outlier_detection' &>> $APK/log.txt
 #run predict.py
-python3 predict.py $PREDRES $METRICSRES $APK $APPNAME '--outlier_detection'
+python3 predict.py $PREDRES $METRICSRES $APK $APPNAME '--outlier_detection' &>> $APK/log.txt
+if [ "$?" -ne "0" ]
+then
+    echo "error in predict.py"
+fi
