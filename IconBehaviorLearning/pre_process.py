@@ -14,7 +14,7 @@ import nltk
 import autocorrect
 
 from tools import save_pkl_data, load_pkl_data
-debug = False
+debug = False 
 
 def pre_process(data, image_min_size, image_wh_ratio, text_min_support,
                 target_permission_groups, vocab2id, label2id):
@@ -75,7 +75,7 @@ def pre_process(data, image_min_size, image_wh_ratio, text_min_support,
     # the first loop
     data_new = []
     for i in range(len(data)):
-        img_data, texts, perms = data[i]
+        img_data, wid_name, texts, perms = data[i]
 
         # handle permissions
         sensitive_perms = pre_process_permissions(perms, perm2group)
@@ -98,7 +98,7 @@ def pre_process(data, image_min_size, image_wh_ratio, text_min_support,
         texts = [stemmed_layout_tokens, embedded_texts, stemmed_res_tokens]
 
         # new data
-        data_new.append([img_data, texts, perms])
+        data_new.append([img_data, texts, perms, wid_name])
 
     # the second loop, refine embedded texts
     # spell checking
@@ -127,10 +127,10 @@ def pre_process(data, image_min_size, image_wh_ratio, text_min_support,
         vocab2id = pre_process_get_vocab_dict(data_new, text_min_support)
     if label2id is None:
         label2id = pre_process_get_perm_dict(target_permission_groups.keys())
-    data_indexed = pre_process_indexing(data_new, vocab2id, label2id)
+    data_indexed, wid_name_list = pre_process_indexing(data_new, vocab2id, label2id)
     if debug == True:
         print (data_indexed)
-    return data_indexed, vocab2id, label2id
+    return data_indexed, vocab2id, label2id, wid_name_list
 
 
 def pre_process_get_perm2group(target_groups):
@@ -206,14 +206,14 @@ def pre_process_statistics(data, removed_data):
     for removed_name, removed_list in removed_data.items():
         print(removed_name + ':', len(removed_list))
     token_counter = Counter()
-    for _, tokens, _ in data:
+    for _, tokens, _, _ in data:
         token_counter.update(tokens)
     print('vocab:', token_counter)
 
 
 def pre_process_get_vocab_dict(data, min_support):
     token_counter = Counter()
-    for img_data, tokens, permissions in data:
+    for img_data, tokens, permissions, wid_name in data:
         print(tokens)
         token_counter.update(tokens)
 
@@ -233,13 +233,15 @@ def pre_process_get_perm_dict(target_permissions):
 
 def pre_process_indexing(data, vocab2id, label2id):
     data_indexed = []
+    wid_name_list = []
     token_unk_index = vocab2id['UNK']
-    for img_data, tokens, permissions in data:
+    for img_data, tokens, permissions, wid_name in data:
         tokens_indexed = [vocab2id.get(t, token_unk_index) for t in tokens]
         perms_indexed = [label2id[p] for p in permissions if p in label2id]
         data_indexed.append([img_data, tokens_indexed, perms_indexed])
+        wid_name_list.append(wid_name)
 
-    return data_indexed
+    return data_indexed, wid_name_list
 
 
 def tokenize_texts(texts):
@@ -283,14 +285,14 @@ def stem_tokens(tokens):
     return [porter_stemmer.stem(t) for t in tokens]
 
 
-def pre_process_save_results(path_out, data, v2id, l2id):
+def pre_process_save_results(path_out, data, v2id, l2id, wid_name_list):
     if debug == True:
         print("v2id")
         print(v2id)
         print("l2id")
         print(l2id)
         print(len(data),len(v2id),len(l2id))
-    save_pkl_data(path_out, [(v2id, l2id), data])
+    save_pkl_data(path_out, [(v2id, l2id), data, wid_name_list])
 
 
 def execute_with_conf(conf, vocab2id=None, label2id=None):

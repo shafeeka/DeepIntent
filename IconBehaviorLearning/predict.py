@@ -15,7 +15,8 @@ debug = False
 
 def predict(predict_conf):
     # load data
-    _, data = load_pkl_data(predict_conf.path_data)
+    result = load_pkl_data(predict_conf.path_data)
+    _, data, wid_name_list = result
 
     # load model meta data
     meta = load_pkl_data(predict_conf.path_meta)
@@ -52,9 +53,11 @@ def predict(predict_conf):
         predictionPath = sys.argv[1] 
         f = open(predictionPath, "a")
         f.write(sys.argv[4] + "\n") #apppend app name first
+         #append widget name
 
         for i in range(len(y_true)):
-            f.write("y_true is: " + "\n" + str(y_true[i]) + "\n" + "y_predict is: " + "\n" + str(y_predict[i]) + "\n")
+            f.write(wid_name_list[i] + "\n")
+            f.write("y_true is: " + str(y_true[i]) + "\n" + "y_predict is: " + str(y_predict[i]) + "\n\n")
         
         f.close()
 

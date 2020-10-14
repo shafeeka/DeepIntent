@@ -94,9 +94,10 @@ def flatten_data(raw_data):
     """
     data = []
     for app, app_vs in raw_data.items():
-        for image, image_vs in app_vs.items():
-            for layout, perms in image_vs.items():
-                data.append([app, image, layout, perms])
+        for wid, wid_vs in app_vs.items():
+            for image, image_vs in wid_vs.items():
+                for layout, perms in image_vs.items():
+                    data.append([app, wid, image, layout, perms])
 
     return data
 
@@ -118,16 +119,18 @@ def merge_icon_permissions(raw_data):
     data = {}  # apk - image - layout - perms
     for raw in raw_data:
         # ['APK', 'Image', 'WID', 'WID Name', 'Layout', 'Handler', 'Method', 'Permissions']
-        apk, image, _, _, layout, _, _, perms = raw
+        apk, image, _, widName, layout, _, _, perms = raw
 
         if apk not in data:
             data[apk] = {}
-        if image not in data[apk]:
-            data[apk][image] = {}
-        if layout not in data[apk][image]:
-            data[apk][image][layout] = set()
+        if widName not in data[apk]:
+            data[apk][widName] = {}
+        if image not in data[apk][widName]:
+            data[apk][widName][image] = {}
+        if layout not in data[apk][widName][image]:
+            data[apk][widName][image][layout] = set()
 
-        data[apk][image][layout].update(perms)
+        data[apk][widName][image][layout].update(perms)
 
     return data
 

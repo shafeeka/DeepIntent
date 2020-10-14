@@ -58,10 +58,10 @@ def extract_drawable_images(data_pa, path_app, log_level=0):
     """
     results = []
     log_helper = ProcessPrinter(len(data_pa) / 20, log_level)
-    for app_name, img_name, layout, _ in data_pa:
+    for app_name, wid_name, img_name, layout, _ in data_pa:
         result, result_path, result_traces = extract_drawable_image(app_name, img_name, path_app)
         results.append(result)
-        log_helper.update('[image]', app_name, img_name, layout, ':',
+        log_helper.update('[image]', app_name, wid_name, img_name, layout, ':',
                           (result[0], result[1]) if result is not None else result)
     log_helper.finish()
 
@@ -71,10 +71,10 @@ def extract_drawable_images(data_pa, path_app, log_level=0):
 def extract_layout_texts(data_pa, path_app, search_range, log_level=0):
     results = []
     log_helper = ProcessPrinter(len(data_pa) / 20, log_level)
-    for app_name, img_name, layout, _ in data_pa:
+    for app_name, wid_name, img_name, layout, _ in data_pa:
         result = handle_layout_text(app_name, img_name, layout, path_app, search_range)
         results.append(result)
-        log_helper.update('[layout]', app_name, img_name, layout, ':', result)
+        log_helper.update('[layout]', app_name, wid_name, img_name, layout, ':', result)
     log_helper.finish()
 
     return results
@@ -100,12 +100,12 @@ def extract_embedded_texts(data_pa, drawable_images, app2lang, east_model,
     results = []
     log_helper = ProcessPrinter(len(data_pa) / 20, log_level)
     for i in range(len(data_pa)):
-        app_name, img_name, layout, _ = data_pa[i]
+        app_name, wid_name, img_name, layout, _ = data_pa[i]
         result = extract_embedded_text(app_name, img_name, drawable_images[i], east_model,
                                        app2lang[app_name], 'english',
                                        ocr_size, ocr_padding, enable_cache)
         results.append(result)
-        log_helper.update('[embedded]', app_name, img_name, layout, ':', result)
+        log_helper.update('[embedded]', app_name, wid_name, img_name, layout, ':', result)
     log_helper.finish()
 
     return results
@@ -118,12 +118,12 @@ def translate_texts(data_pa, texts, enable_cache=True, log_level=0):
     results = []
     log_helper = ProcessPrinter(sum([len(t) for t in texts]) / 20, log_level)
     for i in range(len(data_pa)):
-        app_name, img_name, layout, _ = data_pa[i]
+        app_name, wid_name, img_name, layout, _ = data_pa[i]
         translated = []
         for t in texts[i]:
             r = translate_any_to_english(t, enable_cache)
             translated.append(r)
-            log_helper.update('[translate]', app_name, img_name, layout, ':', t, '->', r)
+            log_helper.update('[translate]', app_name, wid_name, img_name, layout, ':', t, '->', r)
         results.append(translated)
     log_helper.finish()
 
@@ -133,10 +133,10 @@ def translate_texts(data_pa, texts, enable_cache=True, log_level=0):
 def extract_resource_texts(data_pa, log_level=0):
     results = []
     log_helper = ProcessPrinter(len(data_pa) / 20, log_level)
-    for app_name, img_name, layout, _ in data_pa:
+    for app_name, wid_name, img_name, layout, _ in data_pa:
         result = handle_resource_text(img_name)
         results.append(result)
-        log_helper.update('[res]', app_name, img_name, layout, ':', result)
+        log_helper.update('[res]', app_name, wid_name, img_name, layout, ':', result)
     log_helper.finish()
 
     return results
@@ -169,9 +169,9 @@ def execute_with_conf(conf):
     print('finished and save')
     assert len(data_pa) == len(drawable_images) == len(texts)
     # format: [(compressed_img), [[layout_texts], [embedded_texts], [res_texts]], {permissions}]
-    data = [[drawable_images[i]] + [texts[i]] + [data_pa[i][-1]] for i in range(len(data_pa))]
+    data = [[drawable_images[i]] + [data_pa[i][1]] + [texts[i]] + [data_pa[i][-1]] for i in range(len(data_pa))]
     if debug==True:
-        print([[drawable_images[1]] + [texts[1]] + [data_pa[1]][-1]])
+        print([drawable_images[1]] + [data_pa[1][1]] + [texts[1]] + [data_pa[1]][-1])
     save_pkl_data(conf.path_save, data)
 
 
@@ -303,30 +303,25 @@ def main():
     please see the README.md file.
     """
     import sys
-    #from pycallgraph import PyCallGraph
-    #from pycallgraph.output import GraphvizOutput
-    #graphviz = GraphvizOutput()
-    #graphviz.output_file = 'basic.png'
     args = sys.argv[1:]
 
     if '--outlier_detection' in args:
         newApkOutputPath = sys.argv[1]
         newApkDecodedPath = sys.argv[2]
          
-        #with PyCallGraph(output=graphviz):
         new_apk(newApkOutputPath,newApkDecodedPath)
 
-    # example or total example
-    # elif '--example' in args:
-    #     example()
+    #example or total example
+    elif '--example' in args:
+        example()
     elif '--total_example' in args:
         total_example()
-    # else:
-    #     # extraction texts based on arguments
-    #     from conf import ExtractionConfArgumentParser
-    #     parser = ExtractionConfArgumentParser()
-    #     args_conf = parser.parse(args)
-    #     execute_with_conf(args_conf)
+    else:
+        # extraction texts based on arguments
+        from conf import ExtractionConfArgumentParser
+        parser = ExtractionConfArgumentParser()
+        args_conf = parser.parse(args)
+        execute_with_conf(args_conf)
 
 
 if __name__ == '__main__':
