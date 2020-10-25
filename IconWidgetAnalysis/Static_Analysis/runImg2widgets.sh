@@ -1,10 +1,14 @@
 #!/bin/bash
 
 DISA=/home/shafeeka/deepintent/IconWidgetAnalysis/Static_Analysis
-SDK=/home/shafeeka/Android
-APK=/home/shafeeka/deepintent/data/example/newApk
-#APK=/home/shafeeka/deepintent/data/example/benign
+SDK=/home/shafeeka/Android/Sdk
 SQL="jdbc:mysql://127.0.0.1:3306/cc?user=shafeeka&password=jiaozhuys05311&serverTimezone=GMT"
+if [ "$#" -eq "0" ]
+then
+    APK=/home/shafeeka/deepintent/data/example/benign
+else
+    APK=$1
+fi
 cd $DISA/gator-IconIntent/
 python3 gator.py $APK $SDK $DISA/gator-IconIntent $DISA/result.txt
 cp -r $DISA/gator-IconIntent/output/ $DISA/
